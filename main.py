@@ -135,7 +135,7 @@ class UI:
 
     # ---------- lifecycle ----------
     def run(self) -> int:
-        app_id = self.cfg.get("wayland_app_id") or "bottom-screen-ui"
+        app_id = self.cfg.get("wayland_app_id") or "lowerdeck"
         app_id_b = app_id.encode("utf-8")
         os.environ["SDL_VIDEO_WAYLAND_WMCLASS"] = app_id
         os.environ["SDL_APP_ID"] = app_id
