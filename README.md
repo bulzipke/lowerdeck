@@ -8,13 +8,13 @@ Retroid Pocket 5/Mini/Flip2).
 
 ## Features
 
-<img width="1240" height="1080" alt="image" src="https://github.com/user-attachments/assets/8b8d4eeb-ed81-49de-b700-e8f4aa247468" />
+<img width="620" height="540" alt="image" src="https://github.com/user-attachments/assets/8b8d4eeb-ed81-49de-b700-e8f4aa247468" />
 
 - **VC-style panel** — Resume Game, Create Restore Point, Load Restore
   Point with slot picker and live savestate thumbnails. Touches are
   forwarded to RetroArch via the Network Control Interface.
 
-<img width="1240" height="1080" alt="image" src="https://github.com/user-attachments/assets/779492f6-6da5-4a55-ae79-f85deaba2611" />
+<img width="620" height="540" alt="image" src="https://github.com/user-attachments/assets/779492f6-6da5-4a55-ae79-f85deaba2611" />
   
 - **RetroAchievements browser** — scrollable list with badges, points,
   unlock dates, and rarity. Game icon, score, and progress
