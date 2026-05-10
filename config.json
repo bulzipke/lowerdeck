@@ -39,7 +39,7 @@
 
   "backlight_root": "/sys/class/backlight",
   "audio_players": ["pw-cat", "pw-play"],
-  "wayland_app_id": "bottom-screen-ui",
+  "wayland_app_id": "lowerdeck",
 
   "ra_proxy": {
     "listen_host": "127.0.0.1",
