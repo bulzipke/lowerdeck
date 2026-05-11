@@ -32,6 +32,9 @@ DIM_DIMMING = 1
 DIM_DIMMED  = 2
 DIM_WAKING  = 3
 
+TEXT_CACHE_MAX = 256
+ROUND_RECT_CACHE_MAX = 32
+
 
 def load_config() -> dict:
     with CONFIG_PATH.open() as f:
@@ -118,6 +121,9 @@ class UI:
         self._dim_anim_from = 0.0
         self._last_input_ts = time.monotonic()
         self._swallow_next_release = False
+
+        self._text_tex: collections.OrderedDict = collections.OrderedDict()
+        self._round_rect_tex: collections.OrderedDict = collections.OrderedDict()
 
         self._ra_menu_open = False
         self._menu_poll_next: float = 0.0
@@ -261,6 +267,12 @@ class UI:
         for tex, _, _ in self.icons.values():
             sdl.DestroyTexture(tex)
         self.icons.clear()
+        for entry in self._text_tex.values():
+            sdl.DestroyTexture(entry["tex"])
+        self._text_tex.clear()
+        for tex in self._round_rect_tex.values():
+            sdl.DestroyTexture(tex)
+        self._round_rect_tex.clear()
         for f in self._fonts.values():
             sdl.TTF_CloseFont(f)
         self._fonts.clear()
@@ -765,32 +777,24 @@ class UI:
 
                 if text_alpha > 0:
                     wait_text = "Tap the Touch Screen to go\nto the Virtual Console menu."
-                    text_color = [60, 60, 60, text_alpha]
                     max_w = int(w * 0.9)
                     max_h = int(h * 0.7)
-
                     start_size = int(self.font_size_label * 1.2)
                     lines, used_size = self._fit_label_cached(
                         wait_text, max_w, max_h, start_size, self.font_size_date
                     )
-
                     font = self._font(used_size)
-                    if font:
+                    if font is not None:
                         line_skip = sdl.TTF_FontLineSkip(font) or used_size
                         total_h = len(lines) * line_skip
                         start_y = (h - total_h) // 2
-
                         for i, line in enumerate(lines):
-                            s = self._render_text(font, line, text_color)
-                            if s:
-                                dst = sdl.Rect(
-                                    (w - s["w"]) // 2,
-                                    start_y + (i * line_skip),
-                                    s["w"], s["h"]
-                                )
-                                sdl.RenderCopy(self.renderer, s["tex"], None,
-                                               ctypes.byref(dst))
-                                sdl.DestroyTexture(s["tex"])
+                            s = self._render_text(font, line, [60, 60, 60, 255])
+                            if not s:
+                                continue
+                            sdl.SetTextureAlphaMod(s["tex"], text_alpha)
+                            dst = sdl.Rect((w - s["w"]) // 2, start_y + i * line_skip, s["w"], s["h"])
+                            sdl.RenderCopy(self.renderer, s["tex"], None, ctypes.byref(dst))
 
         sdl.SetRenderDrawColor(self.renderer, 0, 0, 0, 255)
 
@@ -823,6 +827,37 @@ class UI:
         sdl.SetRenderDrawColor(self.renderer, rgb[0], rgb[1], rgb[2], 255)
 
     def _fill_round_rect(self, rect, radius: int, color) -> None:
+        if rect.w <= 0 or rect.h <= 0:
+            return
+        tex = self._get_round_rect(rect.w, rect.h, int(radius), color)
+        if tex is None:
+            self._render_round_rect_immediate(rect, radius, color)
+            return
+        dst = sdl.Rect(rect.x, rect.y, rect.w, rect.h)
+        sdl.RenderCopy(self.renderer, tex, None, ctypes.byref(dst))
+
+    def _get_round_rect(self, w: int, h: int, radius: int, color):
+        key = (w, h, radius, tuple(color[:3]))
+        cached = self._round_rect_tex.get(key)
+        if cached is not None:
+            self._round_rect_tex.move_to_end(key)
+            return cached
+        tex = sdl.CreateTexture(self.renderer, sdl.PIXELFORMAT_ARGB8888, sdl.TEXTUREACCESS_TARGET, w, h)
+        if not tex:
+            return None
+        sdl.SetTextureBlendMode(tex, sdl.BLENDMODE_BLEND)
+        sdl.SetRenderTarget(self.renderer, tex)
+        sdl.SetRenderDrawColor(self.renderer, 0, 0, 0, 0)
+        sdl.RenderClear(self.renderer)
+        self._render_round_rect_immediate(Rect(0, 0, w, h), radius, color)
+        sdl.SetRenderTarget(self.renderer, None)
+        self._round_rect_tex[key] = tex
+        while len(self._round_rect_tex) > ROUND_RECT_CACHE_MAX:
+            _, evicted = self._round_rect_tex.popitem(last=False)
+            sdl.DestroyTexture(evicted)
+        return tex
+
+    def _render_round_rect_immediate(self, rect, radius: int, color) -> None:
         self._set_color(color)
         r = int(radius)
         w, h = rect.w, rect.h
@@ -934,7 +969,6 @@ class UI:
             label_x = label_x_start + (label_max_w - s["w"]) // 2
             dst = sdl.Rect(label_x, y, s["w"], s["h"])
             sdl.RenderCopy(self.renderer, s["tex"], None, ctypes.byref(dst))
-            sdl.DestroyTexture(s["tex"])
             y += line_skip
 
     def _draw_button(self, btn, base_size: int) -> None:
@@ -1028,17 +1062,28 @@ class UI:
             return
         dst = sdl.Rect(rect.x + (rect.w - s["w"]) // 2, rect.y + (rect.h - s["h"]) // 2, s["w"], s["h"])
         sdl.RenderCopy(self.renderer, s["tex"], None, ctypes.byref(dst))
-        sdl.DestroyTexture(s["tex"])
 
     def _render_text(self, font, text: str, color) -> dict | None:
-        if font is None:
+        if font is None or not text:
             return None
+        key = (text, int(font), tuple(color))
+        cached = self._text_tex.get(key)
+        if cached is not None:
+            self._text_tex.move_to_end(key)
+            return cached
         surf = sdl.TTF_RenderUTF8_Blended(font, text.encode("utf-8"), _color(color))
         if not surf:
             return None
         try:
             tex = sdl.CreateTextureFromSurface(self.renderer, surf)
-            return {"tex": tex, "w": surf.contents.w, "h": surf.contents.h}
+            if not tex:
+                return None
+            entry = {"tex": tex, "w": surf.contents.w, "h": surf.contents.h}
+            self._text_tex[key] = entry
+            while len(self._text_tex) > TEXT_CACHE_MAX:
+                _, evicted = self._text_tex.popitem(last=False)
+                sdl.DestroyTexture(evicted["tex"])
+            return entry
         finally:
             sdl.FreeSurface(surf)
 

@@ -25,7 +25,12 @@ RENDERER_ACCELERATED      = 0x00000002
 RENDERER_PRESENTVSYNC     = 0x00000004
 
 # SDL_BlendMode
+BLENDMODE_NONE            = 0
 BLENDMODE_BLEND           = 1
+
+# Texture access / pixel format
+TEXTUREACCESS_TARGET      = 2
+PIXELFORMAT_ARGB8888      = 0x16362004
 
 EVENT_QUIT                = 0x100
 EVENT_FINGERDOWN          = 0x700
@@ -157,7 +162,11 @@ RenderIsClipEnabled    = _bind(_sdl, "SDL_RenderIsClipEnabled",     c_int, c_voi
 RenderPresent          = _bind(_sdl, "SDL_RenderPresent",           None,  c_void_p)
 
 CreateTextureFromSurface = _bind(_sdl, "SDL_CreateTextureFromSurface", c_void_p, c_void_p, POINTER(Surface))
+CreateTexture            = _bind(_sdl, "SDL_CreateTexture",            c_void_p, c_void_p, c_uint32, c_int, c_int, c_int)
 DestroyTexture           = _bind(_sdl, "SDL_DestroyTexture",           None, c_void_p)
+SetTextureAlphaMod       = _bind(_sdl, "SDL_SetTextureAlphaMod",       c_int, c_void_p, c_uint8)
+SetTextureBlendMode      = _bind(_sdl, "SDL_SetTextureBlendMode",      c_int, c_void_p, c_int)
+SetRenderTarget          = _bind(_sdl, "SDL_SetRenderTarget",          c_int, c_void_p, c_void_p)
 FreeSurface              = _bind(_sdl, "SDL_FreeSurface",              None, POINTER(Surface))
 
 # SDL_image
