@@ -214,7 +214,6 @@ class UI:
 
         self._running = True
         ev = sdl.Event()
-        next_frame = sdl.GetTicks()
         try:
             while self._running:
                 self._handle_events(ev)
@@ -233,11 +232,6 @@ class UI:
                 if self.ach_view is not None:
                     self.ach_view.tick(dt)
                 self._draw()
-                # ~30 FPS cap; vsync usually beats us to it but cap keeps idle CPU low.
-                next_frame += 33
-                lag = next_frame - sdl.GetTicks()
-                if 0 < lag < 100:
-                    sdl.Delay(lag)
         finally:
             self._teardown()
         return 0
