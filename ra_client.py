@@ -31,6 +31,12 @@ class RAClient:
     def load_state(self) -> None:
         self._send("LOAD_STATE")
 
+    def save_state_slot(self, slot: int) -> None:
+        self._send(f"SAVE_STATE_SLOT {int(slot)}")
+
+    def load_state_slot(self, slot: int) -> None:
+        self._send(f"LOAD_STATE_SLOT {int(slot)}")
+
     def get_config_param(self, param: str) -> str | None:
         res = self._query(f"GET_CONFIG_PARAM {param}")
         if res and res.startswith("GET_CONFIG_PARAM"):
@@ -44,6 +50,12 @@ class RAClient:
 
     def get_menu_active(self) -> bool | None:
         res = self.get_config_param("menu_active")
+        if res is None:
+            return None
+        return res.strip().lower() == "true"
+
+    def get_cheevos_enable(self) -> bool | None:
+        res = self.get_config_param("cheevos_enable")
         if res is None:
             return None
         return res.strip().lower() == "true"
