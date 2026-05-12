@@ -102,6 +102,7 @@ class UI:
         self._thumb_path: Path | None = None
         self._thumb_mtime: float = 0.0
         self._thumb_next_check: float = 0.0
+        self._has_state: bool = False
 
         self._states_root: Path | None = None
         self._states_dir: Path | None = None
@@ -463,8 +464,15 @@ class UI:
         d = self._ensure_states_dir()
         chosen: Path | None = None
         chosen_mtime: float = 0.0
+        self._has_state = False
         if d is not None:
             rom_base = Path(self.rom).stem
+            for f in d.glob(f"{rom_base}.state*"):
+                if f.name.endswith(".png"):
+                    continue
+                if f.is_file():
+                    self._has_state = True
+                    break
             cand = d / f"{rom_base}.state.png"
             try:
                 chosen_mtime = cand.stat().st_mtime
@@ -999,7 +1007,8 @@ class UI:
             dst = sdl.Rect(image_rect.x + (image_rect.w - cw) // 2, image_rect.y + (image_rect.h - ch) // 2, cw, ch)
             sdl.RenderCopy(self.renderer, tex, None, ctypes.byref(dst))
         else:
-            self._draw_text_centered(self.font_size_label, "No State", image_rect, self.cfg["text"])
+            msg = "No Thumbnail" if self._has_state else "No State"
+            self._draw_text_centered(self.font_size_label, msg, image_rect, self.cfg["text"])
 
         self._draw_inset_shadow(image_rect, corner_radius=inner_radius, depth=2)
         self._draw_button_content(btn, self._shift(self.layout.load_label_rect, n), self.font_size_label)
