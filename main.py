@@ -103,6 +103,8 @@ class UI:
         self._thumb_mtime: float = 0.0
         self._thumb_next_check: float = 0.0
         self._has_state: bool = False
+        self._slot: int = 0
+        self._cheevos_enabled_cache: bool | None = None
 
         self._states_root: Path | None = None
         self._states_dir: Path | None = None
@@ -467,13 +469,10 @@ class UI:
         self._has_state = False
         if d is not None:
             rom_base = Path(self.rom).stem
-            for f in d.glob(f"{rom_base}.state*"):
-                if f.name.endswith(".png"):
-                    continue
-                if f.is_file():
-                    self._has_state = True
-                    break
-            cand = d / f"{rom_base}.state.png"
+            slot_suffix = "" if self._slot == 0 else str(self._slot)
+            state_file = d / f"{rom_base}.state{slot_suffix}"
+            self._has_state = state_file.is_file()
+            cand = d / f"{rom_base}.state{slot_suffix}.png"
             try:
                 chosen_mtime = cand.stat().st_mtime
                 chosen = cand
@@ -668,7 +667,13 @@ class UI:
             self.bottom_panel.power_off()
 
     def _cheevos_enabled(self) -> bool | None:
-        return self._cheevos_enabled_arg
+        if self._cheevos_enabled_cache is not None:
+            return self._cheevos_enabled_cache
+        val = self.ra.get_cheevos_enable()
+        if val is None:
+            return None
+        self._cheevos_enabled_cache = val
+        return val
 
     def _poll_menu_state(self) -> None:
         if self._dim_state != DIM_AWAKE:
@@ -707,15 +712,23 @@ class UI:
             self._ensure_menu(False)
             self._enter_dim()
         elif action == "save":
+            slot = self._slot
             self._ensure_menu(False)
-            self._defer(float(self.cfg["menu_close_delay_sec"]), self.ra.save_state)
+            self._defer(float(self.cfg["menu_close_delay_sec"]), lambda: self.ra.save_state_slot(slot))
             self._enter_dim()
             self._states_dir = None
             self._thumb_next_check = now + float(self.cfg["thumb_post_save_sec"])
         elif action == "load":
+            slot = self._slot
             self._ensure_menu(False)
-            self._defer(float(self.cfg["menu_close_delay_sec"]), self.ra.load_state)
+            self._defer(float(self.cfg["menu_close_delay_sec"]), lambda: self.ra.load_state_slot(slot))
             self._enter_dim()
+        elif action == "slot_prev":
+            self._slot = (self._slot - 1) % 10
+            self._thumb_next_check = 0
+        elif action == "slot_next":
+            self._slot = (self._slot + 1) % 10
+            self._thumb_next_check = 0
 
     # ---------- idle dim ----------
     def _tick_dim(self) -> None:
@@ -818,10 +831,16 @@ class UI:
         self._draw_brightness_slider()
 
         if self._view_mode == "vc":
+            slot_actions = ("slot_prev", "slot_next")
             for b in self.layout.buttons:
+                if b.action in slot_actions:
+                    continue
                 if b.action == "load":
                     self._draw_load_button(b)
                 else:
+                    self._draw_button(b, self.font_size_label)
+            for b in self.layout.buttons:
+                if b.action in slot_actions:
                     self._draw_button(b, self.font_size_label)
         else:
             self._draw_achievements_view()
@@ -938,6 +957,17 @@ class UI:
         icon = self.icons.get(btn.icon) if btn.icon else None
         label = btn.label
 
+        if icon and not label:
+            tex, iw, ih = icon
+            target = int(min(rect.w, rect.h) * 0.55)
+            if target > 0 and iw > 0 and ih > 0:
+                scale = min(target / iw, target / ih)
+                cw = max(1, int(iw * scale))
+                ch = max(1, int(ih * scale))
+                dst = sdl.Rect(rect.x + (rect.w - cw) // 2, rect.y + (rect.h - ch) // 2, cw, ch)
+                sdl.RenderCopy(self.renderer, tex, None, ctypes.byref(dst))
+            return
+
         if icon:
             tex, iw, ih = icon
             icon_box = max(0, min(int(rect.h * 0.6), (rect.w - 2 * pad) // 3))
@@ -1011,6 +1041,10 @@ class UI:
             self._draw_text_centered(self.font_size_label, msg, image_rect, self.cfg["text"])
 
         self._draw_inset_shadow(image_rect, corner_radius=inner_radius, depth=2)
+
+        self._draw_text_centered(self.font_size_label, str(self._slot), self._shift(self.layout.slot_label_rect, n),
+                                 self.cfg["text"])
+
         self._draw_button_content(btn, self._shift(self.layout.load_label_rect, n), self.font_size_label)
 
     def _draw_brightness_slider(self) -> None:

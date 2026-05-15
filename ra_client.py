@@ -32,10 +32,10 @@ class RAClient:
         self._send("LOAD_STATE")
 
     def save_state_slot(self, slot: int) -> None:
-        self._send(f"SAVE_STATE_SLOT {int(slot)}")
+        self._query(f"SAVE_STATE_SLOT {int(slot)}")
 
     def load_state_slot(self, slot: int) -> None:
-        self._send(f"LOAD_STATE_SLOT {int(slot)}")
+        self._query(f"LOAD_STATE_SLOT {int(slot)}")
 
     def get_config_param(self, param: str) -> str | None:
         res = self._query(f"GET_CONFIG_PARAM {param}")
