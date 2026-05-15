@@ -11,7 +11,7 @@ Retroid Pocket 5/Mini/Flip2).
 ### VC-style panel
 Resume Game, Create Restore Point, Load Restore Point with slot picker and live savestate thumbnails. Touches are forwarded to RetroArch via the Network Control Interface.
 
-<img width="620" alt="VC-style panel screenshot" src="https://github.com/user-attachments/assets/65acc0c5-b461-4463-bbe5-8de1dedb6c72" />
+<img width="620" alt="VC-style panel screenshot" src="https://github.com/user-attachments/assets/6eb8667a-145c-40a6-a240-741fa4b97102" />
 
 ### RetroAchievements browser
 Scrollable list with badges, points, unlock dates, and rarity. Game icon, score, and progress appear in the header.
@@ -47,6 +47,7 @@ disappears.
 - A TTF font (default path is configurable)
 - RetroArch with `network_cmd_enable = "true"` and
   `cheevos_custom_host = "http://127.0.0.1:8080"`
+- RetroArch version built after commit `5ff3a197a55d05f42e0fd42b3ef44d9f8f2aec43`
 - Linux with `/proc` and (optionally) `/sys/class/backlight` for
   brightness control
 
