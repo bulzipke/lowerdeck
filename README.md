@@ -99,13 +99,8 @@ python3 main.py \
     --rom              "/path/to/rom.zip" \
     --core             mgba \
     --platform         gb \
-    --ra-pid           "$(pgrep -f /usr/bin/retroarch | head -n1)" \
-    --cheevos-enabled  true
+    --ra-pid           "$(pgrep -f /usr/bin/retroarch | head -n1)"
 ```
-
-`--cheevos-enabled` is a tri-state (`true` / `false` / omit). Pass the
-host's per-game cheevos toggle so the UI can show a clear "disabled"
-message when the user opted out for that ROM.
 
 `ra_proxy.py` watches `/proc` for RetroArch and self-exits 3 seconds
 after it disappears, so a single launch from your run-emu script

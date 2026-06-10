@@ -66,11 +66,9 @@ def _color(rgb) -> sdl.Color:
 
 
 class UI:
-    def __init__(self, rom: str, ra_pid: int | None,
-                 cheevos_enabled: bool | None = None):
+    def __init__(self, rom: str, ra_pid: int | None):
         self.rom = rom
         self.ra_pid = ra_pid
-        self._cheevos_enabled_arg = cheevos_enabled
         self.cfg = load_config()
         backlight_root = self.cfg.get("backlight_root", "/sys/class/backlight")
         self.ra = RAClient()
@@ -1147,30 +1145,19 @@ class UI:
             sdl.FreeSurface(surf)
 
 
-def _parse_tribool(v: str) -> bool | None:
-    s = v.strip().strip('"').strip("'").strip().lower()
-    if s in ("1", "true", "yes", "on"):
-        return True
-    if s in ("0", "false", "no", "off"):
-        return False
-    return None
-
-
 def parse_args(argv):
     p = argparse.ArgumentParser()
     p.add_argument("--rom", required=True)
     p.add_argument("--ra-pid", type=int, default=0)
     p.add_argument("--core", default="")
     p.add_argument("--platform", default="")
-    p.add_argument("--cheevos-enabled", type=_parse_tribool, default=None,
-                   help="bool from the host's per-game cheevos setting; omit if unknown")
     return p.parse_args(argv)
 
 
 def main(argv=None) -> int:
     args = parse_args(argv if argv is not None else sys.argv[1:])
     os.environ.setdefault("SDL_VIDEODRIVER", "wayland")
-    ui = UI(args.rom, args.ra_pid or None, cheevos_enabled=args.cheevos_enabled)
+    ui = UI(args.rom, args.ra_pid or None)
     return ui.run()
 
 
