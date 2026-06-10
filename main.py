@@ -543,21 +543,25 @@ class UI:
 
     def _on_input(self, pressed: bool, x: int, y: int) -> None:
         was_dim = self._dim_state in (DIM_DIMMING, DIM_DIMMED, DIM_WAKING)
-        self._note_input()
         if was_dim:
             if pressed:
                 if self._dim_state in (DIM_DIMMED, DIM_DIMMING):
+                    if self._in_wake_deadzone(x):
+                        return
                     self._wake_dim()
                     self._ensure_menu(True)
+                self._note_input()
                 self._swallow_next_release = True
                 return
             if self._swallow_next_release:
                 self._swallow_next_release = False
                 self._pressed = None
                 self._dragging_brightness = False
+                self._note_input()
                 return
             return
 
+        self._note_input()
         if pressed and self.brightness.available and self.layout.brightness_rect.contains(x, y):
             self._dragging_brightness = True
             self._set_brightness(self._brightness_x_to_pct(x))
@@ -609,6 +613,18 @@ class UI:
 
     def _note_input(self) -> None:
         self._last_input_ts = time.monotonic()
+
+    def _in_wake_deadzone(self, x: int) -> bool:
+        w = self.size[0]
+        if w <= 0:
+            return False
+        left = float(self.cfg.get("wake_deadzone_left_ratio", 0.0))
+        right = float(self.cfg.get("wake_deadzone_right_ratio", 0.0))
+        if left > 0.0 and x < w * left:
+            return True
+        if right > 0.0 and x >= w * (1.0 - right):
+            return True
+        return False
 
     def _wake_dim(self) -> None:
         if self._dim_state in (DIM_DIMMING, DIM_DIMMED):

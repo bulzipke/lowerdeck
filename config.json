@@ -26,6 +26,8 @@
   "dim_alpha": 255,
   "dim_ms": 500,
   "wake_ms": 200,
+  "wake_deadzone_left_ratio": 0.04,
+  "wake_deadzone_right_ratio": 0,
 
   "thumb_poll_sec": 0.3,
   "thumb_post_save_sec": 0.5,
