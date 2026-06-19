@@ -27,7 +27,7 @@ Scrollable list with badges, points, unlock dates, and rarity. Game icon, score,
 +-------------------+                          +---------------+
          |                                             ^
          |   HTTP /dorequest.php                       |  HTTP
-         |   (cheevos_custom_host=127.0.0.1:8080)      |  /_ui/state
+         |   (cheevos_custom_host=127.0.0.1:4874)      |  /_ui/state
          v                                             |
 +-------------------+        HTTPS             +---------------+
 |   ra_proxy.py     |  --------------------->  | retroachieve- |
@@ -46,7 +46,7 @@ disappears.
 - `libSDL2`, `libSDL2_image`, `libSDL2_ttf` (loaded at runtime via ctypes)
 - A TTF font (default path is configurable)
 - RetroArch with `network_cmd_enable = "true"` and
-  `cheevos_custom_host = "http://127.0.0.1:8080"`
+  `cheevos_custom_host = "http://127.0.0.1:4874"`
 - RetroArch version built after commit `5ff3a197a55d05f42e0fd42b3ef44d9f8f2aec43`
 - Linux with `/proc` and (optionally) `/sys/class/backlight` for
   brightness control
@@ -113,7 +113,7 @@ hook) live under `os/`. Adapting to another distro is mostly a matter
 of:
 
 1. Spawning `ra_proxy.py` before RetroArch in your run-game script.
-2. Adding `cheevos_custom_host = "http://127.0.0.1:8080"` to RA's
+2. Adding `cheevos_custom_host = "http://127.0.0.1:4874"` to RA's
    appendconfig (or main `retroarch.cfg`).
 3. Spawning `main.py` after RetroArch's window appears, with the four
    CLI args above.

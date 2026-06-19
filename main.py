@@ -135,7 +135,7 @@ class UI:
 
         ra_cfg = self.cfg.get("ra_proxy") or {}
         proxy_host = ra_cfg.get("listen_host", "127.0.0.1")
-        proxy_port = int(ra_cfg.get("listen_port", 8080))
+        proxy_port = int(ra_cfg.get("listen_port", 4874))
         self._proxy_state = RAStatePoller(f"http://{proxy_host}:{proxy_port}/_ui/state", interval_sec=0.5)
         self.ach_view: AchievementsView | None = None
         self._last_tick_ts = 0.0

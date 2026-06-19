@@ -22,7 +22,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 
 DEFAULTS = {
     "listen_host": "127.0.0.1",
-    "listen_port": 8080,
+    "listen_port": 4874,
     "upstream": "https://retroachievements.org",
     "badges_dir": "/storage/thumbnails/cheevos/badges",
     "retroarch_process_match": "/usr/bin/retroarch",
