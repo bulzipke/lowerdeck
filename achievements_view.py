@@ -245,6 +245,43 @@ class AchievementsView:
     # ---------- internals ----------
 
     @staticmethod
+    def _hsv_to_rgb(h: float, s: float, v: float) -> tuple:
+        h6 = h * 6.0
+        i = int(h6) % 6
+        f = h6 - int(h6)
+        p = v * (1 - s)
+        q = v * (1 - f * s)
+        tv = v * (1 - (1 - f) * s)
+        r, g, b = [(v,tv,p),(q,v,p),(p,v,tv),(p,q,v),(tv,p,v),(v,p,q)][i]
+        return int(r * 255), int(g * 255), int(b * 255)
+
+    def _draw_rainbow_text(self, text: str, size: int, x: int, y: int, max_w: int) -> None:
+        WHITE = (255, 255, 255)
+        now = time.monotonic()
+        n = max(len(text), 1)
+        cx = x
+        for i, ch in enumerate(text):
+            if cx >= x + max_w:
+                break
+            entry = self._render_text(ch, size, WHITE)
+            if entry is None:
+                continue
+            tex, w, h = entry
+            hue = ((i / n) + now * 0.35) % 1.0
+            r, g, b = self._hsv_to_rgb(hue, 0.9, 1.0)
+            sdl.SetTextureColorMod(tex, r, g, b)
+            avail = min(w, x + max_w - cx)
+            if avail < w:
+                src = sdl.Rect(0, 0, avail, h)
+                dst = sdl.Rect(cx, y, avail, h)
+                sdl.RenderCopy(self.renderer, tex, ctypes.byref(src), ctypes.byref(dst))
+            elif avail > 0:
+                dst = sdl.Rect(cx, y, w, h)
+                sdl.RenderCopy(self.renderer, tex, None, ctypes.byref(dst))
+            sdl.SetTextureColorMod(tex, 255, 255, 255)
+            cx += w
+
+    @staticmethod
     def _sort_by_unlock(achievements: list, unlocks: dict) -> list:
         locked, unlocked = [], []
         for a in achievements:
@@ -463,7 +500,21 @@ class AchievementsView:
         y += ds
 
         label, value = self._format_footer(ach, unlock_info)
-        self._draw_split_line(label, value, self.size_footer, dim_color, text_x, y, text_w)
+        hardcore = unlock_info is not None and unlock_info.get("hardcore")
+        if hardcore:
+            fs = self.size_footer
+            value_entry = self._render_text(value, fs, dim_color) if value else None
+            right_w = value_entry[1] if value_entry else 0
+            gap = max(8, fs // 4) if right_w else 0
+            label_max_w = max(0, text_w - right_w - gap)
+            self._draw_rainbow_text(label, fs, text_x, y, label_max_w)
+            if value_entry:
+                tex, vw, vh = value_entry
+                ry = y + (self._line_skip(fs) - vh) // 2
+                dst = sdl.Rect(text_x + text_w - vw, ry, vw, vh)
+                sdl.RenderCopy(self.renderer, tex, None, ctypes.byref(dst))
+        else:
+            self._draw_split_line(label, value, self.size_footer, dim_color, text_x, y, text_w)
 
     def _draw_split_line(self, left_text: str, right_text: str, size: int,
                          color, x: int, y: int, total_w: int) -> None:

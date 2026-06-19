@@ -165,6 +165,7 @@ CreateTextureFromSurface = _bind(_sdl, "SDL_CreateTextureFromSurface", c_void_p,
 CreateTexture            = _bind(_sdl, "SDL_CreateTexture",            c_void_p, c_void_p, c_uint32, c_int, c_int, c_int)
 DestroyTexture           = _bind(_sdl, "SDL_DestroyTexture",           None, c_void_p)
 SetTextureAlphaMod       = _bind(_sdl, "SDL_SetTextureAlphaMod",       c_int, c_void_p, c_uint8)
+SetTextureColorMod       = _bind(_sdl, "SDL_SetTextureColorMod",       c_int, c_void_p, c_uint8, c_uint8, c_uint8)
 SetTextureBlendMode      = _bind(_sdl, "SDL_SetTextureBlendMode",      c_int, c_void_p, c_int)
 SetRenderTarget          = _bind(_sdl, "SDL_SetRenderTarget",          c_int, c_void_p, c_void_p)
 FreeSurface              = _bind(_sdl, "SDL_FreeSurface",              None, POINTER(Surface))
