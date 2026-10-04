@@ -534,9 +534,13 @@ class UI:
                 self._on_motion(px, py)
             elif t in (sdl.EVENT_MOUSEBUTTONDOWN, sdl.EVENT_MOUSEBUTTONUP):
                 mb = ctypes.cast(ctypes.pointer(ev), ctypes.POINTER(sdl.MouseButtonEvent)).contents
+                if mb.which == sdl.TOUCH_MOUSEID:
+                    continue  # already handled as a finger event
                 self._on_input(t == sdl.EVENT_MOUSEBUTTONDOWN, mb.x, mb.y)
             elif t == sdl.EVENT_MOUSEMOTION:
                 mm = ctypes.cast(ctypes.pointer(ev), ctypes.POINTER(sdl.MouseMotionEvent)).contents
+                if mm.which == sdl.TOUCH_MOUSEID:
+                    continue
                 self._on_motion(mm.x, mm.y)
 
     def _on_input(self, pressed: bool, x: int, y: int) -> None:
