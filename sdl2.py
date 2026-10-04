@@ -39,6 +39,7 @@ EVENT_FINGERMOTION        = 0x702
 EVENT_MOUSEMOTION         = 0x400
 EVENT_MOUSEBUTTONDOWN     = 0x401
 EVENT_MOUSEBUTTONUP       = 0x402
+TOUCH_MOUSEID             = 0xFFFFFFFF  # SDL_TOUCH_MOUSEID: mouse events SDL synthesizes from touches
 
 IMG_INIT_JPG              = 0x00000001
 IMG_INIT_PNG              = 0x00000002
