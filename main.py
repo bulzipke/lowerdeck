@@ -665,15 +665,9 @@ class UI:
         self._pressed = None
 
     def _ensure_menu(self, want_open: bool) -> None:
-        actual = self.ra.get_menu_active()
-        if actual is None:
-            return
-        if actual != self._ra_menu_open:
+        actual = self.ra.set_menu_open(want_open)
+        if actual is not None:
             self._ra_menu_open = actual
-        if self._ra_menu_open == want_open:
-            return
-        self.ra.menu_toggle()
-        self._ra_menu_open = want_open
 
     def _enter_dim(self) -> None:
         self._dim_state = DIM_DIMMED

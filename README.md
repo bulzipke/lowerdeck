@@ -48,6 +48,9 @@ disappears.
 - RetroArch with `network_cmd_enable = "true"` and
   `cheevos_custom_host = "http://127.0.0.1:4874"`
 - RetroArch version built after commit `5ff3a197a55d05f42e0fd42b3ef44d9f8f2aec43`
+  (reads the menu state with `GET_CONFIG_PARAM menu_active`, or with the
+  `MENU` command on builds after `75f278e286c1c6e9226d58268b4ab43b53974e84`,
+  which no longer have `menu_active`)
 - Linux with `/proc` and (optionally) `/sys/class/backlight` for
   brightness control
 
