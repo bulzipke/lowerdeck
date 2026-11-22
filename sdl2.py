@@ -144,6 +144,7 @@ SetHint                = _bind(_sdl, "SDL_SetHint",                 c_int, c_cha
 GetTicks               = _bind(_sdl, "SDL_GetTicks",                c_uint32)
 Delay                  = _bind(_sdl, "SDL_Delay",                   None,  c_uint32)
 PollEvent              = _bind(_sdl, "SDL_PollEvent",               c_int, POINTER(Event))
+WaitEventTimeout       = _bind(_sdl, "SDL_WaitEventTimeout",        c_int, POINTER(Event), c_int)
 
 CreateWindow           = _bind(_sdl, "SDL_CreateWindow",            c_void_p,
                                c_char_p, c_int, c_int, c_int, c_int, c_uint32)

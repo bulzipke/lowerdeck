@@ -6,6 +6,7 @@ import collections
 import ctypes
 import functools
 import json
+import math
 import os
 import shutil
 import signal
@@ -31,6 +32,9 @@ DIM_AWAKE   = 0
 DIM_DIMMING = 1
 DIM_DIMMED  = 2
 DIM_WAKING  = 3
+
+IDLE_WAIT_MS = 100
+DIM_HINT_MS = 3 * 4000
 
 TEXT_CACHE_MAX = 256
 ROUND_RECT_CACHE_MAX = 32
@@ -122,6 +126,7 @@ class UI:
         self._dim_anim_from = 0.0
         self._last_input_ts = time.monotonic()
         self._swallow_next_release = False
+        self._idle_drawn = False
 
         self._text_tex: collections.OrderedDict = collections.OrderedDict()
         self._round_rect_tex: collections.OrderedDict = collections.OrderedDict()
@@ -238,7 +243,7 @@ class UI:
                 self._last_tick_ts = now
                 if self.ach_view is not None:
                     self.ach_view.tick(dt)
-                self._draw()
+                self._present()
         finally:
             self._teardown()
         return 0
@@ -773,6 +778,33 @@ class UI:
                 self._dim_alpha = 0.0
                 self._swallow_next_release = False
 
+    def _dimmed_elapsed_ms(self) -> int:
+        if self._dim_anim_start == 0.0:
+            return max(0, int((time.monotonic() - self._last_input_ts) * 1000))
+        dimmed_start_time = self._dim_anim_start + (max(1, int(self.cfg["dim_ms"])) / 1000.0)
+        return max(0, int((time.monotonic() - dimmed_start_time) * 1000))
+
+    def _is_idle(self) -> bool:
+        if self._dim_state != DIM_DIMMED:
+            return False
+        if self.bottom_panel.available:
+            return True
+        return self._dim_alpha >= 255 and self._dimmed_elapsed_ms() >= DIM_HINT_MS
+
+    def _idle_wait_ms(self) -> int:
+        deadline = min([self._thumb_next_check] + [d for d, _ in self._pending])
+        return max(1, min(IDLE_WAIT_MS, math.ceil((deadline - time.monotonic()) * 1000)))
+
+    def _present(self) -> None:
+        if not self._is_idle():
+            self._idle_drawn = False
+            self._draw()
+            return
+        if not self._idle_drawn:
+            self._draw()
+            self._idle_drawn = True
+        sdl.WaitEventTimeout(None, self._idle_wait_ms())
+
     def _draw_dim_overlay(self) -> None:
         if self._dim_alpha <= 0.5:
             return
@@ -785,19 +817,9 @@ class UI:
         sdl.RenderFillRect(self.renderer, ctypes.byref(full))
 
         if self._dim_state == DIM_DIMMED:
-            dim_ms = max(1, int(self.cfg["dim_ms"]))
+            elapsed_ms = self._dimmed_elapsed_ms()
 
-            if self._dim_anim_start == 0.0:
-                elapsed_ms = int((time.monotonic() - self._last_input_ts) * 1000)
-            else:
-                dimmed_start_time = self._dim_anim_start + (dim_ms / 1000.0)
-                elapsed_ms = int((time.monotonic() - dimmed_start_time) * 1000)
-
-            if elapsed_ms < 0:
-                elapsed_ms = 0
-
-            cycle_count = elapsed_ms // 4000
-            if cycle_count < 3:
+            if elapsed_ms < DIM_HINT_MS:
                 cycle = elapsed_ms % 4000
 
                 if cycle < 2000:
